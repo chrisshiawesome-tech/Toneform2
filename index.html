@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf8f4">
+  <meta name="description" content="A clear, free browser tuner for 30 instruments. Tune by listening with your device microphone.">
+  <title>Toneform — Online Instrument Tuner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #25211e;
+      --muted: #827b74;
+      --line: #e9e2da;
+      --paper: #fbf8f4;
+      --card: #fffefa;
+      --orange: #e66d38;
+      --orange-dark: #c65323;
+      --orange-pale: #fff0e8;
+      --green: #23866b;
+      --red: #c7594e;
+      --shadow: 0 18px 54px rgba(63, 43, 27, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: var(--paper); font-family: 'DM Sans', sans-serif; }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    .site-header { height: 78px; border-bottom: 1px solid rgba(60, 44, 31, .08); display: flex; align-items: center; position: relative; z-index: 3; background: rgba(251,248,244,.93); }
+    .nav { width: min(1160px, calc(100% - 44px)); margin: auto; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-family: Manrope, sans-serif; font-weight: 800; letter-spacing: -.7px; font-size: 21px; }
+    .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; color: white; background: var(--orange); }
+    .brand-mark svg { width: 19px; }
+    .nav-links { display: flex; gap: 30px; align-items: center; color: #675f58; font-size: 14px; font-weight: 600; }
+    .nav-links a:hover { color: var(--orange-dark); }
+    .nav-cta { color: white !important; background: var(--ink); padding: 11px 17px; border-radius: 8px; }
+    .hero { width: min(1160px, calc(100% - 44px)); margin: 0 auto; padding: 69px 0 54px; display: grid; grid-template-columns: 1fr 1.05fr; gap: 56px; align-items: center; }
+    .eyebrow { display: inline-flex; gap: 8px; align-items: center; color: var(--orange-dark); background: var(--orange-pale); padding: 8px 11px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: .75px; text-transform: uppercase; }
+    .eyebrow-dot { width: 6px; height: 6px; background: var(--orange); border-radius: 50%; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 520px; margin: 19px 0 16px; font: 800 clamp(44px, 5vw, 67px)/1.02 Manrope, sans-serif; letter-spacing: -3.7px; }
+    h1 em { color: var(--orange); font-style: normal; }
+    .hero-copy { max-width: 460px; margin-bottom: 25px; color: var(--muted); font-size: 16px; line-height: 1.75; }
+    .hero-points { display: flex; gap: 20px; flex-wrap: wrap; color: #645d56; font-size: 12px; font-weight: 600; }
+    .hero-points span { display: inline-flex; align-items: center; gap: 7px; }
+    .check { color: var(--green); font-size: 15px; }
+    .tuner-card { background: var(--card); border: 1px solid #eee6dd; box-shadow: var(--shadow); border-radius: 18px; padding: 25px; position: relative; overflow: hidden; }
+    .tuner-card:before { content: ''; position: absolute; width: 200px; height: 200px; border-radius: 50%; right: -128px; top: -134px; background: #fff0e8; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; position: relative; }
+    .card-label { font-weight: 700; font-size: 14px; }
+    .live-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: .65px; font-weight: 700; color: #847b73; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #c7c0b8; }
+    .live-dot.active { background: #30a27e; box-shadow: 0 0 0 4px #e3f5ee; }
+    .select-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin: 21px 0 13px; position: relative; }
+    .select-wrap { position: relative; }
+    .select-wrap:after { content: '⌄'; position: absolute; right: 13px; top: 10px; pointer-events: none; color: #827970; }
+    select { width: 100%; appearance: none; border: 1px solid var(--line); color: var(--ink); border-radius: 8px; padding: 11px 34px 11px 12px; background: #fff; font-weight: 600; font-size: 13px; outline: none; }
+    select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(230,109,56,.12); }
+    .mode-toggle { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 0 12px; color: #655d55; font-weight: 700; font-size: 12px; white-space: nowrap; }
+    .mode-toggle:hover { border-color: var(--orange); }
+    .string-targets { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; margin: 0 0 9px; }
+    .string-target { border: 1px solid var(--line); background: #fff; color: #746b63; border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: 700; }
+    .string-target.selected { color: var(--orange-dark); background: var(--orange-pale); border-color: #f4cbb7; }
+    .tuner-readout { border-radius: 12px; background: #f8f5f1; min-height: 246px; padding: 17px 20px 20px; position: relative; text-align: center; }
+    .pitch-state { height: 17px; color: #8c847c; font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
+    .pitch-state.good { color: var(--green); }
+    .pitch-state.high { color: var(--red); }
+    .pitch-state.low { color: #c17a2a; }
+    .note { margin: 4px 0 -3px; font: 800 80px/.98 Manrope, sans-serif; letter-spacing: -5px; color: #bdb5ad; transition: color .18s ease; }
+    .note.detected { color: var(--ink); }
+    .octave { font-size: 21px; letter-spacing: 0; vertical-align: top; color: #898077; margin-left: 3px; }
+    .frequency { color: #817970; font-size: 12px; font-weight: 600; height: 18px; }
+    .needle-area { height: 63px; position: relative; margin: 18px 0 2px; }
+    .needle-scale { position: absolute; height: 5px; top: 27px; left: 5%; width: 90%; border-radius: 10px; background: linear-gradient(90deg, #e9ac62, #ded8d0 44%, #ded8d0 56%, #e9ac62); }
+    .needle-scale:before, .needle-scale:after { content: ''; position: absolute; top: -5px; height: 15px; width: 1px; background: #c6bdb4; }
+    .needle-scale:before { left: 50%; height: 24px; top: -9px; width: 2px; background: var(--ink); }
+    .needle-scale:after { left: 0; box-shadow: 56px 0 #c6bdb4, 112px 0 #c6bdb4, 168px 0 #c6bdb4, 224px 0 #c6bdb4, 280px 0 #c6bdb4, 336px 0 #c6bdb4, 392px 0 #c6bdb4; }
+    .needle { position: absolute; left: 50%; top: 13px; height: 34px; width: 3px; border-radius: 4px; background: var(--orange); transform: translateX(-50%); transition: left .12s ease-out; box-shadow: 0 2px 8px rgba(230,109,56,.3); }
+    .needle:after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 9px; height: 9px; border-radius: 50%; background: var(--orange); transform: translateX(-50%); }
+    .scale-labels { position: absolute; left: 4%; right: 4%; bottom: 0; display: flex; justify-content: space-between; color: #a39b93; font-size: 10px; }
+    .cents-line { color: #867e75; font-size: 12px; height: 18px; }
+    .start-button { margin-top: 15px; width: 100%; border: 0; border-radius: 9px; padding: 13px 16px; color: white; background: var(--orange); font-weight: 700; font-size: 14px; box-shadow: 0 7px 16px rgba(210,91,41,.18); }
+    .start-button:hover { background: var(--orange-dark); transform: translateY(-1px); }
+    .start-button.stop { color: var(--ink); background: #eee8e1; box-shadow: none; }
+    .mic-message { min-height: 15px; margin: 9px 0 0; text-align: center; color: #8b827a; font-size: 10px; }
+    .reference-row { border-top: 1px solid #f0ebe5; margin-top: 14px; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; color: #827a72; font-size: 11px; font-weight: 600; }
+    .reference-control { display: flex; align-items: center; gap: 7px; }
+    .reference-control input { width: 90px; accent-color: var(--orange); }
+    .reference-control strong { width: 43px; color: var(--ink); }
+    .trust-row { border-top: 1px solid rgba(60, 44, 31, .08); border-bottom: 1px solid rgba(60, 44, 31, .08); padding: 19px 0; }
+    .trust-inner { width: min(1160px, calc(100% - 44px)); margin: auto; display: flex; align-items: center; justify-content: center; gap: clamp(20px, 6vw, 90px); color: #817970; font-size: 12px; font-weight: 600; }
+    .trust-item { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; }
+    .trust-icon { color: var(--orange); font-size: 17px; }
+    .section { width: min(1160px, calc(100% - 44px)); margin: auto; padding: 82px 0; }
+    .section-heading { text-align: center; max-width: 600px; margin: 0 auto 37px; }
+    .section-heading .eyebrow { margin-bottom: 13px; }
+    h2 { font: 800 clamp(30px, 4vw, 42px)/1.15 Manrope, sans-serif; letter-spacing: -1.5px; margin-bottom: 11px; }
+    .section-heading p { color: var(--muted); line-height: 1.7; font-size: 14px; margin-bottom: 0; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature { background: var(--card); border: 1px solid #eee6dd; border-radius: 12px; padding: 23px; }
+    .feature-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; color: var(--orange-dark); background: var(--orange-pale); font-size: 18px; margin-bottom: 16px; }
+    .feature h3 { font: 700 15px Manrope, sans-serif; margin-bottom: 8px; }
+    .feature p { color: var(--muted); font-size: 12px; line-height: 1.65; margin: 0; }
+    .instrument-strip { border-radius: 16px; color: white; background: #28231f; padding: 31px; display: grid; grid-template-columns: .7fr 1.3fr; gap: 26px; align-items: center; }
+    .instrument-strip h2 { font-size: 28px; margin: 0 0 8px; }
+    .instrument-strip p { color: #bfb7af; margin: 0; font-size: 12px; line-height: 1.6; }
+    .instrument-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .instrument-chip { border: 1px solid #514943; background: #332e29; color: #e7ded7; padding: 8px 10px; border-radius: 7px; font-size: 11px; }
+    .pricing-section { background: #fff; border-top: 1px solid #f0ebe5; }
+    .pricing-section .section { padding-top: 70px; padding-bottom: 70px; }
+    .pricing-card { max-width: 500px; margin: auto; padding: 25px; border: 1px solid #eee6dd; border-radius: 14px; background: var(--paper); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .pricing-card h3 { font: 700 16px Manrope, sans-serif; margin: 0 0 5px; }
+    .pricing-card p { color: var(--muted); font-size: 12px; margin: 0; }
+    .pricing-price { font: 800 26px Manrope, sans-serif; white-space: nowrap; }
+    .pricing-price small { color: var(--muted); font: 500 11px 'DM Sans', sans-serif; }
+    .pricing-button { display: inline-block; text-align: center; text-decoration: none; border: 0; border-radius: 7px; background: var(--ink); color: white; font-size: 12px; font-weight: 700; padding: 11px 13px; white-space: nowrap; }
+    .pricing-button:hover { background: var(--orange-dark); }
+    .pricing-button:disabled { cursor: default; opacity: .72; }
+    .pricing-note { text-align: center; color: #948b83; max-width: 560px; margin: 16px auto 0; font-size: 10px; line-height: 1.6; }
+    footer { width: min(1160px, calc(100% - 44px)); margin: auto; border-top: 1px solid rgba(60, 44, 31, .08); padding: 23px 0; display: flex; align-items: center; justify-content: space-between; color: #8c847c; font-size: 11px; }
+    .footer-brand { color: var(--ink); }
+    @media (max-width: 850px) {
+      .hero { grid-template-columns: 1fr; max-width: 640px; gap: 31px; padding-top: 49px; }
+      .hero-copy { max-width: 560px; }
+      h1 { max-width: 600px; }
+      .trust-inner { gap: 17px; flex-wrap: wrap; }
+      .instrument-strip { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .site-header { height: 66px; }
+      .nav { width: calc(100% - 30px); }
+      .nav-links { gap: 15px; font-size: 12px; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      .nav-cta { padding: 10px 12px; }
+      .hero, .section, .trust-inner, footer { width: calc(100% - 30px); }
+      .hero { padding-top: 40px; padding-bottom: 39px; }
+      h1 { font-size: 48px; letter-spacing: -2.7px; }
+      .hero-copy { font-size: 14px; }
+      .tuner-card { padding: 17px; border-radius: 14px; }
+      .tuner-readout { min-height: 230px; padding: 16px 10px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .trust-inner { justify-content: flex-start; }
+      .trust-item { font-size: 10px; }
+      .section { padding: 59px 0; }
+      .instrument-strip { padding: 23px; }
+      .pricing-card { align-items: flex-start; flex-wrap: wrap; }
+      .pricing-card .pricing-button { width: 100%; }
+      footer { gap: 10px; flex-wrap: wrap; }
+    }
+
+    /* Cinematic scroll chapter: the tuner story unfolds as the page moves. */
+    .site-header { position: sticky; top: 0; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); background: rgba(251,248,244,.86); }
+    .site-header.dark-nav { color: #f7f2ed; background: rgba(18,18,17,.84); border-color: rgba(255,255,255,.08); }
+    .site-header.dark-nav .brand, .site-header.dark-nav .nav-links { color: #f7f2ed; }
+    .site-header.dark-nav .nav-cta { color: #211d1a !important; background: #f7f2ed; }
+    .story-scroll { height: 270vh; position: relative; color: #f8f5f0; background: #121211; overflow: clip; --story-progress: 0; }
+    .story-sticky { position: sticky; top: 78px; height: calc(100vh - 78px); min-height: 610px; display: grid; grid-template-columns: .88fr 1.12fr; align-items: center; gap: 5vw; padding: 48px max(7vw, calc((100vw - 1160px) / 2)); isolation: isolate; }
+    .story-sticky:before { content: ''; position: absolute; inset: 0; z-index: -2; background: radial-gradient(ellipse at 71% 49%, rgba(230,109,56,.14), transparent 34%), radial-gradient(ellipse at 13% 88%, rgba(255,255,255,.035), transparent 35%); }
+    .story-copy { max-width: 460px; position: relative; z-index: 1; }
+    .story-kicker { display: flex; align-items: center; gap: 10px; color: #ff9c70; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; }
+    .story-kicker:before { content: ''; width: 25px; height: 1px; background: #ff9c70; }
+    .story-title { margin: 24px 0 17px; font: 700 clamp(42px, 5.4vw, 70px)/1.02 Manrope, sans-serif; letter-spacing: -4px; }
+    .story-title em { color: #ff8954; font-style: normal; }
+    .story-description { max-width: 375px; color: #a9a39e; font-size: 14px; line-height: 1.8; min-height: 74px; }
+    .story-steps { display: flex; gap: 8px; margin-top: 35px; }
+    .story-step { height: 3px; width: 44px; border-radius: 6px; background: #383633; transition: background .45s, width .45s; }
+    .story-step.active { width: 75px; background: #f47c48; }
+    .story-step-label { margin-top: 13px; color: #79736e; text-transform: uppercase; letter-spacing: 1.3px; font-size: 9px; font-weight: 700; }
+    .story-stage { display: grid; place-items: center; position: relative; min-width: 0; }
+    .signal-visual { width: min(43vw, 500px); aspect-ratio: 1; position: relative; display: grid; place-items: center; }
+    .signal-visual:before { content: ''; position: absolute; inset: 11%; border: 1px solid rgba(255,255,255,.09); border-radius: 50%; box-shadow: 0 0 90px rgba(230,109,56,.09), inset 0 0 70px rgba(230,109,56,.045); }
+    .signal-orbit { position: absolute; inset: 4%; border: 1px solid rgba(244,124,72,.25); border-radius: 50%; transform: rotate(calc(var(--story-progress) * 140deg)) scale(calc(.84 + var(--story-progress) * .14)); transition: transform .6s cubic-bezier(.2,.8,.2,1), border-color .6s; }
+    .signal-orbit:before, .signal-orbit:after { content: ''; position: absolute; left: 50%; top: -5px; width: 9px; height: 9px; border-radius: 50%; background: #f47c48; box-shadow: 0 0 18px rgba(244,124,72,.8); }
+    .signal-orbit:after { left: 15%; top: auto; bottom: 8%; width: 5px; height: 5px; background: #ffe0cc; }
+    .signal-orbit.inner { inset: 19%; border-color: rgba(255,255,255,.12); transform: rotate(calc(var(--story-progress) * -110deg)) scale(calc(1.06 - var(--story-progress) * .12)); }
+    .signal-orbit.inner:before { top: auto; left: auto; right: 7%; bottom: 30%; width: 5px; height: 5px; background: #ffbd95; }
+    .signal-core { position: relative; z-index: 1; width: 47%; aspect-ratio: 1; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 38% 30%, #34302c, #1b1a19 68%); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 0 70px rgba(230,109,56,.12), inset 0 1px rgba(255,255,255,.11); transition: transform .7s cubic-bezier(.2,.8,.2,1), box-shadow .7s; }
+    .signal-core strong { font: 700 clamp(48px, 7vw, 82px)/.98 Manrope, sans-serif; letter-spacing: -5px; }
+    .signal-core span { color: #ff986b; font-size: 11px; letter-spacing: .8px; font-weight: 700; margin-bottom: 7px; }
+    .signal-core small { color: #87817b; margin-top: 9px; font-size: 8px; text-transform: uppercase; letter-spacing: 1.4px; }
+    .signal-bars { height: 56px; display: flex; align-items: center; justify-content: center; gap: 4px; position: absolute; bottom: 10%; left: 16%; right: 16%; opacity: .7; }
+    .signal-bars i { display: block; width: 2px; height: var(--bar); border-radius: 4px; background: linear-gradient(#ffb18c, #e66d38); transform: scaleY(.28); transform-origin: center; animation: sound-pulse 1.2s ease-in-out infinite alternate; animation-delay: var(--delay); }
+    @keyframes sound-pulse { to { transform: scaleY(1); opacity: .55; } }
+    .meter-float { position: absolute; z-index: 2; top: 17%; right: -2%; width: 183px; padding: 15px 15px 13px; border-radius: 11px; background: rgba(35,33,31,.88); border: 1px solid rgba(255,255,255,.1); box-shadow: 0 15px 50px rgba(0,0,0,.25); transform: translate3d(calc((.5 - var(--story-progress)) * 18px), calc((.5 - var(--story-progress)) * 20px), 0); transition: transform .35s ease; backdrop-filter: blur(14px); }
+    .meter-float-label { display: flex; justify-content: space-between; color: #8b8580; font-size: 8px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; }
+    .meter-float-note { margin: 9px 0 10px; display: flex; align-items: baseline; justify-content: space-between; }
+    .meter-float-note strong { font: 700 25px Manrope, sans-serif; }
+    .meter-float-note span { color: #ff9b70; font-size: 10px; font-weight: 700; }
+    .mini-meter { height: 3px; border-radius: 4px; background: linear-gradient(90deg,#d99a63,#d4cec8 50%,#d99a63); position: relative; }
+    .mini-meter:after { content: ''; position: absolute; top: -4px; left: calc(50% + (var(--story-progress) - .5) * 60%); height: 11px; width: 2px; background: #ff8954; transition: left .45s ease; }
+    .meter-scale { display: flex; justify-content: space-between; color: #79736e; font-size: 7px; margin-top: 7px; }
+    .story-scroll[data-scene="1"] .signal-core { transform: scale(1.04); box-shadow: 0 0 95px rgba(230,109,56,.19), inset 0 1px rgba(255,255,255,.15); }
+    .story-scroll[data-scene="2"] .signal-core { transform: scale(1.08); border-color: rgba(255,156,112,.55); box-shadow: 0 0 120px rgba(230,109,56,.25), inset 0 1px rgba(255,255,255,.2); }
+    .story-scroll[data-scene="2"] .signal-orbit { border-color: rgba(255,156,112,.48); }
+    .story-scroll[data-scene="2"] .mini-meter:after { left: 50%; }
+    .story-scroll[data-scene="1"] .mini-meter:after { left: 47%; }
+    .story-scroll[data-scene="0"] .mini-meter:after { left: 32%; }
+    .story-bottom { position: absolute; bottom: 27px; left: max(7vw, calc((100vw - 1160px) / 2)); right: max(7vw, calc((100vw - 1160px) / 2)); display: flex; justify-content: space-between; align-items: center; color: #77716c; font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; }
+    .story-scroll-cue { display: flex; gap: 9px; align-items: center; color: #beb7b1; }
+    .story-scroll-cue span { display: inline-block; animation: cue-bob 1.3s ease-in-out infinite alternate; }
+    @keyframes cue-bob { to { transform: translateY(4px); } }
+    .reveal-on-scroll { opacity: 0; transform: translateY(28px); transition: opacity .75s ease, transform .75s cubic-bezier(.2,.75,.25,1); }
+    .reveal-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
+    .feature:nth-child(2) { transition-delay: .12s; }
+    .feature:nth-child(3) { transition-delay: .24s; }
+    @media (max-width: 850px) {
+      .story-scroll { height: 250vh; }
+      .story-sticky { grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 0; padding: 38px 8vw 58px; }
+      .story-copy { max-width: 600px; }
+      .story-title { margin: 16px 0 11px; font-size: clamp(39px, 8vw, 58px); }
+      .story-description { min-height: 48px; font-size: 12px; }
+      .story-steps { margin-top: 19px; }
+      .signal-visual { width: min(53vw, 390px); }
+      .meter-float { right: -11%; top: 16%; }
+      .story-bottom { left: 8vw; right: 8vw; bottom: 17px; }
+    }
+    @media (max-width: 600px) {
+      .story-sticky { top: 66px; height: calc(100vh - 66px); min-height: 600px; padding: 31px 22px 55px; }
+      .story-scroll { height: 230vh; }
+      .story-title { font-size: 42px; letter-spacing: -2.5px; }
+      .story-description { max-width: 330px; }
+      .signal-visual { width: min(76vw, 340px); }
+      .signal-core strong { font-size: 59px; }
+      .meter-float { width: 145px; right: -6%; top: 12%; padding: 11px; }
+      .story-bottom { left: 22px; right: 22px; bottom: 14px; font-size: 7px; }
+      .story-scroll-cue { gap: 5px; }
+      .story-kicker { font-size: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *:before, *:after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .reveal-on-scroll { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="#top" aria-label="Toneform home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 15.5V8.5M9.3 19V5M14.7 16.5v-9M20 13.5v-3" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+        <span>Toneform</span>
+      </a>
+      <div class="nav-links">
+        <a href="#experience">Experience</a>
+        <a href="#instruments">Instruments</a>
+        <a href="#pricing">Pricing</a>
+        <a class="nav-cta" href="#tuner">Open tuner <span aria-hidden="true">↗</span></a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div>
+        <span class="eyebrow"><span class="eyebrow-dot"></span> Your sound, in tune</span>
+        <h1>Find your<br><em>perfect pitch.</em></h1>
+        <p class="hero-copy">A precise, beautifully simple tuner for the instruments you play. Open it in your browser, allow microphone access, and tune with confidence.</p>
+        <div class="hero-points">
+          <span><b class="check">✓</b> Free to tune</span>
+          <span><b class="check">✓</b> 30 instrument presets</span>
+          <span><b class="check">✓</b> No app to install</span>
+        </div>
+      </div>
+
+      <section class="tuner-card" id="tuner" aria-label="Online instrument tuner">
+        <div class="card-top">
+          <span class="card-label">Chromatic tuner</span>
+          <span class="live-pill"><span class="live-dot" id="liveDot"></span><span id="liveStatus">Ready</span></span>
+        </div>
+        <div class="select-row">
+          <label class="select-wrap" aria-label="Choose instrument"><select id="instrumentSelect"></select></label>
+          <button class="mode-toggle" id="modeToggle" type="button" title="Switch between open-string targets and chromatic tuning">Chromatic mode</button>
+        </div>
+        <div class="string-targets" id="stringTargets" aria-label="Open string targets"></div>
+        <div class="tuner-readout" aria-live="polite">
+          <div class="pitch-state" id="pitchState">Play a note to begin</div>
+          <div class="note" id="noteDisplay">—<span class="octave" id="octaveDisplay"></span></div>
+          <div class="frequency" id="frequencyDisplay">Waiting for sound</div>
+          <div class="needle-area" aria-hidden="true">
+            <div class="needle-scale"></div>
+            <div class="needle" id="needle"></div>
+            <div class="scale-labels"><span>♭ Flat</span><span>In tune</span><span>Sharp ♯</span></div>
+          </div>
+          <div class="cents-line" id="centsDisplay">— cents</div>
+        </div>
+        <button class="start-button" id="startButton" type="button">Start tuning</button>
+        <p class="mic-message" id="micMessage">Your microphone is only used while the tuner is running.</p>
+        <div class="reference-row">
+          <span>Concert pitch</span>
+          <label class="reference-control" for="a4Range"><span>A4</span><input id="a4Range" type="range" min="430" max="450" value="440"><strong><span id="a4Value">440</span> Hz</strong></label>
+        </div>
+      </section>
+    </section>
+
+    <div class="trust-row" aria-label="Tuner benefits">
+      <div class="trust-inner">
+        <span class="trust-item"><span class="trust-icon">◉</span> Browser-based pitch detection</span>
+        <span class="trust-item"><span class="trust-icon">⌁</span> Adjustable concert pitch</span>
+        <span class="trust-item"><span class="trust-icon">♬</span> Built for practice rooms</span>
+      </div>
+    </div>
+
+    <section class="story-scroll" id="experience" data-scene="0" aria-label="How Toneform listens to your instrument">
+      <div class="story-sticky">
+        <div class="story-copy">
+          <div class="story-kicker" id="storyKicker">A note enters the room</div>
+          <h2 class="story-title" id="storyTitle">Sound has<br>a <em>shape.</em></h2>
+          <p class="story-description" id="storyDescription">A single note travels through the air. Toneform listens, finds its frequency, and turns it into a clear visual reading.</p>
+          <div class="story-steps" aria-label="Scroll story progress"><span class="story-step active"></span><span class="story-step"></span><span class="story-step"></span></div>
+          <div class="story-step-label" id="storyStepLabel">01 — Capture the signal</div>
+        </div>
+        <div class="story-stage" aria-hidden="true">
+          <div class="signal-visual">
+            <div class="signal-orbit"></div><div class="signal-orbit inner"></div>
+            <div class="signal-core"><span id="storyFrequency">82.4 Hz</span><strong id="storyNote">E2</strong><small id="storyCoreLabel">Signal captured</small></div>
+            <div class="signal-bars" id="signalBars"></div>
+            <div class="meter-float">
+              <div class="meter-float-label"><span>Live pitch</span><span id="storyStatus">Listening</span></div>
+              <div class="meter-float-note"><strong id="storyMeterNote">E2</strong><span id="storyCents">−18 cents</span></div>
+              <div class="mini-meter"></div><div class="meter-scale"><span>Flat</span><span>In tune</span><span>Sharp</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="story-bottom"><span id="storyFootnote">Real-time pitch. Made easy to read.</span><span class="story-scroll-cue">Scroll to explore <span>↓</span></span></div>
+      </div>
+    </section>
+
+    <section class="section" id="how-it-works">
+      <div class="section-heading">
+        <span class="eyebrow"><span class="eyebrow-dot"></span> Simple by design</span>
+        <h2>Get in tune in three steps.</h2>
+        <p>No complicated setup. Choose your instrument and let the live needle guide you to the right pitch.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature reveal-on-scroll"><div class="feature-icon">⌕</div><h3>Choose what you play</h3><p>Select from 30 instrument presets. For string instruments, choose a specific open string or switch to chromatic mode.</p></article>
+        <article class="feature reveal-on-scroll"><div class="feature-icon">♩</div><h3>Allow microphone access</h3><p>Tap Start tuning and allow microphone access in your browser. Use a quiet room for the steadiest reading.</p></article>
+        <article class="feature reveal-on-scroll"><div class="feature-icon">↔</div><h3>Follow the needle</h3><p>The note and cents indicator show whether your sound is flat, sharp, or centered. Adjust until it reads in tune.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="instruments" style="padding-top:0">
+      <div class="instrument-strip reveal-on-scroll">
+        <div><h2>One tuner.<br>30 instruments.</h2><p>From guitar and bass to orchestral strings, woodwinds, brass, keyboard, and harp.</p></div>
+        <div class="instrument-list" id="instrumentChips"></div>
+      </div>
+    </section>
+
+    <section class="pricing-section" id="pricing">
+      <div class="section">
+        <div class="section-heading">
+          <span class="eyebrow"><span class="eyebrow-dot"></span> Straightforward pricing</span>
+          <h2>Start tuning for free.</h2>
+          <p>The tuner is free to use. If you want to support Toneform’s development, Pro is available as an optional monthly subscription.</p>
+        </div>
+        <div class="pricing-card reveal-on-scroll">
+          <div><h3>Toneform Pro</h3><p>Support future improvements to Toneform.</p></div>
+          <div class="pricing-price" id="pricingPrice">A$0.99 <small>/ month</small></div>
+          <a class="pricing-button" id="subscribeButton" href="https://buy.stripe.com/cNi7sN2SI6A44dXax51kA01">Subscribe to Pro</a>
+        </div>
+        <p class="pricing-note" id="pricingNote">Pro is A$0.99 per month through Stripe. The tuner and its 30 instrument presets remain free.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <a class="brand footer-brand" href="#top"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 15.5V8.5M9.3 19V5M14.7 16.5v-9M20 13.5v-3" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span><span>Toneform</span></a>
+    <span>Made for musicians, wherever you practice.</span>
+    <span>© <span id="year"></span> Toneform</span>
+  </footer>
+
+  <script>
+    // These presets use concert-pitch note names. Wind instruments are chromatic.
+    const instruments = [
+      { name: 'Guitar · Standard', short: 'Guitar', strings: [['E2',40],['A2',45],['D3',50],['G3',55],['B3',59],['E4',64]] },
+      { name: 'Guitar · Drop D', short: 'Drop D guitar', strings: [['D2',38],['A2',45],['D3',50],['G3',55],['B3',59],['E4',64]] },
+      { name: 'Guitar · Half-step down', short: 'Half-step guitar', strings: [['Eb2',39],['Ab2',44],['Db3',49],['Gb3',54],['Bb3',58],['Eb4',63]] },
+      { name: 'Guitar · 7-string', short: '7-string guitar', strings: [['B1',35],['E2',40],['A2',45],['D3',50],['G3',55],['B3',59],['E4',64]] },
+      { name: 'Bass · 4-string', short: '4-string bass', strings: [['E1',28],['A1',33],['D2',38],['G2',43]] },
+      { name: 'Bass · 5-string', short: '5-string bass', strings: [['B0',23],['E1',28],['A1',33],['D2',38],['G2',43]] },
+      { name: 'Bass · 6-string', short: '6-string bass', strings: [['B0',23],['E1',28],['A1',33],['D2',38],['G2',43],['C3',48]] },
+      { name: 'Ukulele · Standard', short: 'Ukulele', strings: [['G4',67],['C4',60],['E4',64],['A4',69]] },
+      { name: 'Ukulele · Baritone', short: 'Baritone uke', strings: [['D3',50],['G3',55],['B3',59],['E4',64]] },
+      { name: 'Mandolin', short: 'Mandolin', strings: [['G3',55],['D4',62],['A4',69],['E5',76]] },
+      { name: 'Banjo · 5-string', short: 'Banjo', strings: [['G4',67],['D3',50],['G3',55],['B3',59],['D4',62]] },
+      { name: 'Violin', short: 'Violin', strings: [['G3',55],['D4',62],['A4',69],['E5',76]] },
+      { name: 'Viola', short: 'Viola', strings: [['C3',48],['G3',55],['D4',62],['A4',69]] },
+      { name: 'Cello', short: 'Cello', strings: [['C2',36],['G2',43],['D3',50],['A3',57]] },
+      { name: 'Double bass', short: 'Double bass', strings: [['E1',28],['A1',33],['D2',38],['G2',43]] },
+      { name: 'Piano / keyboard', short: 'Piano / keyboard' },
+      { name: 'Harp', short: 'Harp' },
+      { name: 'Flute', short: 'Flute' },
+      { name: 'Piccolo', short: 'Piccolo' },
+      { name: 'Oboe', short: 'Oboe' },
+      { name: 'Clarinet · concert pitch', short: 'Clarinet' },
+      { name: 'Bass clarinet · concert pitch', short: 'Bass clarinet' },
+      { name: 'Bassoon', short: 'Bassoon' },
+      { name: 'Alto saxophone · concert pitch', short: 'Alto saxophone' },
+      { name: 'Tenor saxophone · concert pitch', short: 'Tenor saxophone' },
+      { name: 'Baritone saxophone · concert pitch', short: 'Baritone saxophone' },
+      { name: 'Trumpet · concert pitch', short: 'Trumpet' },
+      { name: 'French horn · concert pitch', short: 'French horn' },
+      { name: 'Trombone', short: 'Trombone' },
+      { name: 'Tuba', short: 'Tuba' }
+    ];
+    const noteNames = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+    const flatNames = { 'C♯':'D♭', 'D♯':'E♭', 'F♯':'G♭', 'G♯':'A♭', 'A♯':'B♭' };
+    const select = document.getElementById('instrumentSelect');
+    const targetsEl = document.getElementById('stringTargets');
+    const modeButton = document.getElementById('modeToggle');
+    const startButton = document.getElementById('startButton');
+    const micMessage = document.getElementById('micMessage');
+    const pitchState = document.getElementById('pitchState');
+    const noteDisplay = document.getElementById('noteDisplay');
+    const octaveDisplay = document.getElementById('octaveDisplay');
+    const frequencyDisplay = document.getElementById('frequencyDisplay');
+    const centsDisplay = document.getElementById('centsDisplay');
+    const needle = document.getElementById('needle');
+    const liveDot = document.getElementById('liveDot');
+    const liveStatus = document.getElementById('liveStatus');
+    let instrumentIndex = 0;
+    let targetIndex = 0;
+    let chromaticMode = false;
+    let audioContext = null;
+    let analyser = null;
+    let mediaStream = null;
+    let animationFrame = null;
+    let buffer = new Float32Array(16384);
+    let a4 = 440;
+
+    instruments.forEach(function (instrument, index) {
+      const option = document.createElement('option');
+      option.value = String(index);
+      option.textContent = instrument.name;
+      select.appendChild(option);
+    });
+    document.getElementById('instrumentChips').innerHTML = instruments.map(function (item) {
+      return '<span class="instrument-chip">' + item.short + '</span>';
+    }).join('');
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const signalBars = document.getElementById('signalBars');
+    for (let barIndex = 0; barIndex < 34; barIndex++) {
+      const bar = document.createElement('i');
+      const height = 9 + Math.round((Math.sin(barIndex * .58) + 1) * 18) + (barIndex % 5 === 0 ? 9 : 0);
+      bar.style.setProperty('--bar', height + 'px');
+      bar.style.setProperty('--delay', (-barIndex * .045) + 's');
+      signalBars.appendChild(bar);
+    }
+
+    const storyScenes = [
+      {
+        kicker: 'A note enters the room',
+        title: 'Sound has<br>a <em>shape.</em>',
+        description: 'A single note travels through the air. Toneform listens, finds its frequency, and turns it into a clear visual reading.',
+        note: 'E2', frequency: '82.4 Hz', cents: '−18 cents', status: 'Listening', core: 'Signal captured',
+        step: '01 — Capture the signal', foot: 'Real-time pitch. Made easy to read.'
+      },
+      {
+        kicker: 'Every vibration tells a story',
+        title: 'Find the note<br>inside the <em>sound.</em>',
+        description: 'The tuner compares the incoming pitch with the note you want. A clear reading takes the guesswork out of practice.',
+        note: 'A4', frequency: '438.2 Hz', cents: '−7 cents', status: 'Analysing', core: 'Pitch identified',
+        step: '02 — Read the pitch', foot: 'A live reading, shaped by your sound.'
+      },
+      {
+        kicker: 'A little closer with every turn',
+        title: 'Settle into<br>your <em>center.</em>',
+        description: 'Turn the peg until the needle rests in the middle. Your instrument is ready, and you can get back to the music.',
+        note: 'A4', frequency: '440.0 Hz', cents: '0 cents', status: 'In tune', core: 'Right on pitch',
+        step: '03 — Find the center', foot: 'Listen. Adjust. Play.'
+      }
+    ];
+    const storySection = document.querySelector('.story-scroll');
+    let currentStoryScene = -1;
+    let storyUpdatePending = false;
+
+    function renderStoryScene(sceneIndex) {
+      if (sceneIndex === currentStoryScene) return;
+      currentStoryScene = sceneIndex;
+      const scene = storyScenes[sceneIndex];
+      storySection.dataset.scene = String(sceneIndex);
+      document.getElementById('storyKicker').textContent = scene.kicker;
+      document.getElementById('storyTitle').innerHTML = scene.title;
+      document.getElementById('storyDescription').textContent = scene.description;
+      document.getElementById('storyNote').textContent = scene.note;
+      document.getElementById('storyMeterNote').textContent = scene.note;
+      document.getElementById('storyFrequency').textContent = scene.frequency;
+      document.getElementById('storyCents').textContent = scene.cents;
+      document.getElementById('storyStatus').textContent = scene.status;
+      document.getElementById('storyCoreLabel').textContent = scene.core;
+      document.getElementById('storyStepLabel').textContent = scene.step;
+      document.getElementById('storyFootnote').textContent = scene.foot;
+      document.querySelectorAll('.story-step').forEach(function (step, index) {
+        step.classList.toggle('active', index === sceneIndex);
+      });
+    }
+
+    function updateStoryProgress() {
+      storyUpdatePending = false;
+      const availableTravel = storySection.offsetHeight - window.innerHeight;
+      const progress = availableTravel > 0 ? Math.max(0, Math.min(1, -storySection.getBoundingClientRect().top / availableTravel)) : 0;
+      storySection.style.setProperty('--story-progress', progress.toFixed(3));
+      const sceneIndex = Math.min(storyScenes.length - 1, Math.floor(progress * storyScenes.length));
+      renderStoryScene(sceneIndex);
+    }
+
+    function requestStoryProgress() {
+      if (storyUpdatePending) return;
+      storyUpdatePending = true;
+      requestAnimationFrame(updateStoryProgress);
+    }
+
+    window.addEventListener('scroll', requestStoryProgress, { passive: true });
+    window.addEventListener('resize', requestStoryProgress);
+    requestStoryProgress();
+
+    const header = document.querySelector('.site-header');
+    const storyHeaderObserver = new IntersectionObserver(function (entries) {
+      header.classList.toggle('dark-nav', entries.some(function (entry) { return entry.isIntersecting; }));
+    }, { threshold: 0 });
+    storyHeaderObserver.observe(storySection);
+
+    const revealItems = document.querySelectorAll('.reveal-on-scroll, .section-heading');
+    if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const revealObserver = new IntersectionObserver(function (entries, observer) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: .15 });
+      revealItems.forEach(function (item) {
+        item.classList.add('reveal-on-scroll');
+        revealObserver.observe(item);
+      });
+    } else {
+      revealItems.forEach(function (item) { item.classList.add('is-visible'); });
+    }
+
+    function renderTargets() {
+      const instrument = instruments[instrumentIndex];
+      if (!instrument.strings || chromaticMode) {
+        targetsEl.innerHTML = '';
+        targetsEl.style.display = 'none';
+        modeButton.textContent = instrument.strings ? 'Open-string mode' : 'Chromatic mode';
+        modeButton.disabled = !instrument.strings;
+        modeButton.style.opacity = instrument.strings ? '1' : '.55';
+        return;
+      }
+      targetsEl.style.display = 'flex';
+      modeButton.textContent = 'Chromatic mode';
+      modeButton.disabled = false;
+      targetsEl.innerHTML = instrument.strings.map(function (item, index) {
+        const label = item[0];
+        return '<button type="button" class="string-target ' + (index === targetIndex ? 'selected' : '') + '" data-target="' + index + '">' + label + '</button>';
+      }).join('');
+      targetsEl.querySelectorAll('[data-target]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          targetIndex = Number(button.dataset.target);
+          renderTargets();
+        });
+      });
+    }
+
+    select.addEventListener('change', function () {
+      instrumentIndex = Number(select.value);
+      targetIndex = 0;
+      chromaticMode = !instruments[instrumentIndex].strings;
+      renderTargets();
+      resetReadout();
+    });
+    modeButton.addEventListener('click', function () {
+      if (!instruments[instrumentIndex].strings) return;
+      chromaticMode = !chromaticMode;
+      renderTargets();
+      resetReadout();
+    });
+    document.getElementById('a4Range').addEventListener('input', function (event) {
+      a4 = Number(event.target.value);
+      document.getElementById('a4Value').textContent = String(a4);
+    });
+    renderTargets();
+
+    function resetReadout() {
+      pitchState.textContent = audioContext ? 'Listening for a note' : 'Play a note to begin';
+      pitchState.className = 'pitch-state';
+      noteDisplay.firstChild.nodeValue = '—';
+      noteDisplay.classList.remove('detected');
+      octaveDisplay.textContent = '';
+      frequencyDisplay.textContent = audioContext ? 'Listening…' : 'Waiting for sound';
+      centsDisplay.textContent = '— cents';
+      needle.style.left = '50%';
+    }
+
+    function stopTuner() {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = null;
+      if (mediaStream) mediaStream.getTracks().forEach(function (track) { track.stop(); });
+      mediaStream = null;
+      if (audioContext && audioContext.state !== 'closed') audioContext.close();
+      audioContext = null;
+      analyser = null;
+      startButton.textContent = 'Start tuning';
+      startButton.classList.remove('stop');
+      liveDot.classList.remove('active');
+      liveStatus.textContent = 'Ready';
+      micMessage.textContent = 'Your microphone is only used while the tuner is running.';
+      resetReadout();
+    }
+
+    startButton.addEventListener('click', async function () {
+      if (audioContext) { stopTuner(); return; }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        micMessage.textContent = 'Microphone access needs a secure page (HTTPS) and a supported browser.';
+        return;
+      }
+      startButton.disabled = true;
+      startButton.textContent = 'Connecting microphone…';
+      micMessage.textContent = 'Your browser will ask for microphone permission.';
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') await audioContext.resume();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 16384;
+        analyser.smoothingTimeConstant = 0;
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        source.connect(analyser);
+        startButton.textContent = 'Stop tuning';
+        startButton.classList.add('stop');
+        liveDot.classList.add('active');
+        liveStatus.textContent = 'Listening';
+        micMessage.textContent = 'Tip: play one clear note and let it ring.';
+        pitchState.textContent = 'Listening for a note';
+        frequencyDisplay.textContent = 'Listening…';
+        processAudio();
+      } catch (error) {
+        if (mediaStream) mediaStream.getTracks().forEach(function (track) { track.stop(); });
+        mediaStream = null;
+        audioContext = null;
+        const denied = error && (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError');
+        micMessage.textContent = denied ? 'Microphone permission was blocked. Allow it in your browser settings, then try again.' : 'Could not start the microphone. Check that it is connected and try again.';
+        startButton.textContent = 'Try again';
+      } finally {
+        startButton.disabled = false;
+      }
+    });
+
+    function detectPitch(input, sampleRate) {
+      const downsampleFactor = 4;
+      const length = Math.floor(input.length / downsampleFactor);
+      const samples = new Float32Array(length);
+      let sum = 0;
+      for (let i = 0; i < length; i++) {
+        const sample = input[i * downsampleFactor];
+        samples[i] = sample;
+        sum += sample * sample;
+      }
+      const rms = Math.sqrt(sum / length);
+      if (rms < 0.012) return null;
+      const effectiveRate = sampleRate / downsampleFactor;
+      const minLag = Math.max(2, Math.floor(effectiveRate / 1200));
+      const maxLag = Math.min(Math.floor(effectiveRate / 24), Math.floor(length * .35));
+      const differences = new Float32Array(maxLag + 1);
+      for (let lag = minLag; lag <= maxLag; lag++) {
+        let difference = 0;
+        const limit = length - lag;
+        for (let i = 0; i < limit; i++) {
+          const delta = samples[i] - samples[i + lag];
+          difference += delta * delta;
+        }
+        differences[lag] = difference;
+      }
+      let runningSum = 0;
+      const normalized = new Float32Array(maxLag + 1);
+      for (let lag = 1; lag <= maxLag; lag++) {
+        runningSum += differences[lag];
+        normalized[lag] = runningSum === 0 ? 1 : differences[lag] * lag / runningSum;
+      }
+      let chosenLag = -1;
+      for (let lag = minLag; lag < maxLag; lag++) {
+        if (normalized[lag] < 0.16) {
+          while (lag + 1 <= maxLag && normalized[lag + 1] < normalized[lag]) lag++;
+          chosenLag = lag;
+          break;
+        }
+      }
+      if (chosenLag < 0) {
+        let best = 1;
+        for (let lag = minLag; lag <= maxLag; lag++) {
+          if (normalized[lag] < best) { best = normalized[lag]; chosenLag = lag; }
+        }
+        if (chosenLag < 0 || best > .35) return null;
+      }
+      const before = normalized[chosenLag - 1] || normalized[chosenLag];
+      const center = normalized[chosenLag];
+      const after = normalized[chosenLag + 1] || center;
+      const curve = before - 2 * center + after;
+      const shift = curve === 0 ? 0 : .5 * (before - after) / curve;
+      const refinedLag = chosenLag + shift;
+      return refinedLag > 0 ? effectiveRate / refinedLag : null;
+    }
+
+    function frequencyForMidi(midi) { return a4 * Math.pow(2, (midi - 69) / 12); }
+
+    function noteForFrequency(frequency) {
+      const midi = 69 + 12 * Math.log2(frequency / a4);
+      const roundedMidi = Math.round(midi);
+      const index = ((roundedMidi % 12) + 12) % 12;
+      const name = noteNames[index];
+      const octave = Math.floor(roundedMidi / 12) - 1;
+      return { midi: roundedMidi, note: name, octave: octave, cents: (midi - roundedMidi) * 100 };
+    }
+
+    function getTuningTarget(frequency, detected) {
+      const instrument = instruments[instrumentIndex];
+      if (!chromaticMode && instrument.strings && instrument.strings[targetIndex]) {
+        const selected = instrument.strings[targetIndex];
+        return { label: selected[0], midi: selected[1], frequency: frequencyForMidi(selected[1]) };
+      }
+      return { label: detected.note + detected.octave, midi: detected.midi, frequency: frequencyForMidi(detected.midi) };
+    }
+
+    function showPitch(frequency) {
+      const detected = noteForFrequency(frequency);
+      const target = getTuningTarget(frequency, detected);
+      const cents = 1200 * Math.log2(frequency / target.frequency);
+      const bounded = Math.max(-50, Math.min(50, cents));
+      const position = 50 + bounded;
+      const exactTarget = Math.abs(cents) <= 5;
+      pitchState.textContent = exactTarget ? 'In tune' : (cents < 0 ? 'Tune up · flat' : 'Tune down · sharp');
+      pitchState.className = 'pitch-state ' + (exactTarget ? 'good' : (cents < 0 ? 'low' : 'high'));
+      const displayName = flatNames[detected.note] || detected.note;
+      noteDisplay.firstChild.nodeValue = displayName;
+      noteDisplay.classList.add('detected');
+      octaveDisplay.textContent = String(detected.octave);
+      frequencyDisplay.textContent = frequency.toFixed(1) + ' Hz' + (target.label ? ' · Target ' + target.label : '');
+      centsDisplay.textContent = (cents > 0 ? '+' : '') + cents.toFixed(0) + ' cents';
+      needle.style.left = position + '%';
+    }
+
+    function processAudio() {
+      if (!analyser || !audioContext) return;
+      analyser.getFloatTimeDomainData(buffer);
+      const frequency = detectPitch(buffer, audioContext.sampleRate);
+      if (frequency && Number.isFinite(frequency)) {
+        showPitch(frequency);
+      } else {
+        pitchState.textContent = 'Listening for a note';
+        pitchState.className = 'pitch-state';
+        frequencyDisplay.textContent = 'Play one clear note';
+        centsDisplay.textContent = '— cents';
+        noteDisplay.firstChild.nodeValue = '—';
+        noteDisplay.classList.remove('detected');
+        octaveDisplay.textContent = '';
+        needle.style.left = '50%';
+      }
+      animationFrame = requestAnimationFrame(processAudio);
+    }
+
+    // Pro checkout opens the Stripe Payment Link from the pricing card.
+  </script>
+</body>
+</html>
